@@ -1,19 +1,37 @@
 """
 Database connection and session management.
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, Session
 from contextlib import contextmanager
 from app.config import settings
 
+# Build engine kwargs — SQLite needs check_same_thread=False
+_connect_args = {}
+if settings.DATABASE_URL.startswith("sqlite"):
+    _connect_args["check_same_thread"] = False
+
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_size=20,          # base pool size for high-traffic scenarios
-    max_overflow=10,       # allow up to 10 extra connections beyond pool_size
+    connect_args=_connect_args,
     pool_pre_ping=True,    # verify connection health before checkout
-    pool_recycle=1800,     # recycle connections every 30 min to avoid stale sockets
     echo=settings.DB_ECHO,
+    # pool_size / max_overflow only valid for non-SQLite engines
+    **({} if settings.DATABASE_URL.startswith("sqlite") else {
+        "pool_size": 20,
+        "max_overflow": 10,
+        "pool_recycle": 1800,
+    })
 )
+
+# Enable WAL mode on SQLite for better concurrent read performance
+if settings.DATABASE_URL.startswith("sqlite"):
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 SessionLocal = sessionmaker(
     bind=engine,

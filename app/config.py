@@ -7,7 +7,8 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # ── Database ────────────────────────────────────────────────────────────
-    DATABASE_URL: str = "postgresql://wallet_user:wallet_pass@localhost:5432/wallet_db"
+    # Default: SQLite (built-in, zero setup). Switch to PostgreSQL in .env for production.
+    DATABASE_URL: str = "sqlite:///./wallet.db"
     DB_ECHO: bool = False          # Set True to log all SQL (dev only)
 
     # ── Application ─────────────────────────────────────────────────────────

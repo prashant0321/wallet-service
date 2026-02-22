@@ -38,7 +38,7 @@ from decimal import Decimal
 from typing import Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.exceptions import (
@@ -63,6 +63,9 @@ from app.config import settings
 SYSTEM_TREASURY = "system_treasury"
 SYSTEM_BONUS_POOL = "system_bonus_pool"
 SYSTEM_REVENUE = "system_revenue"
+
+# SQLite does not support SELECT ... FOR UPDATE; detect at startup
+_IS_SQLITE = settings.DATABASE_URL.startswith("sqlite")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -99,17 +102,20 @@ def _lock_wallet(db: Session, account_id: UUID, asset_type_id: UUID) -> Wallet:
     """
     Acquire a pessimistic row-level lock on the wallet row.
 
-    `SELECT ... FOR UPDATE` blocks any other transaction that tries to lock
-    the same row, serialising concurrent writes to the same wallet.
+    On PostgreSQL: uses `SELECT ... FOR UPDATE` — blocks any concurrent
+    transaction that tries to lock the same row.
+
+    On SQLite: FOR UPDATE is not supported; SQLite's own file-level locking
+    plus WAL mode provides serialisation in single-process deployments.
     """
-    wallet = db.execute(
-        select(Wallet)
-        .where(
-            Wallet.account_id == account_id,
-            Wallet.asset_type_id == asset_type_id,
-        )
-        .with_for_update()   # ← the key concurrency primitive
-    ).scalar_one_or_none()
+    q = select(Wallet).where(
+        Wallet.account_id == account_id,
+        Wallet.asset_type_id == asset_type_id,
+    )
+    if not _IS_SQLITE:
+        q = q.with_for_update()   # ← PostgreSQL pessimistic lock
+
+    wallet = db.execute(q).scalar_one_or_none()
 
     if wallet is None:
         raise WalletNotFoundError(str(account_id), str(asset_type_id))
