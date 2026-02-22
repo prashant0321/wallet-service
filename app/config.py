@@ -6,19 +6,18 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # ── Database ────────────────────────────────────────────────────────────
-    # Set DATABASE_URL env var to use PostgreSQL in production.
-    # Falls back to SQLite in-memory if not set.
     DATABASE_URL: str = "sqlite://"
-    DB_ECHO: bool = False          # Set True to log all SQL (dev only)
+    DB_ECHO: bool = False          
 
-    # ── Application ─────────────────────────────────────────────────────────
     APP_NAME: str = "Wallet Service"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
 
-    # ── Idempotency ──────────────────────────────────────────────────────────
-    IDEMPOTENCY_KEY_TTL_HOURS: int = 24   # Keys expire after 24 h
+    IDEMPOTENCY_KEY_TTL_HOURS: int = 24
+
+    JWT_SECRET: str = "change-me-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     class Config:
         env_file = ".env"

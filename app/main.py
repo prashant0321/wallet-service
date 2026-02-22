@@ -6,6 +6,7 @@ from app.config import settings
 from app.models import Base
 from app.database import engine
 from app.routers.wallet import router as wallet_router
+from app.routers.auth import router as auth_router
 
 
 @asynccontextmanager
@@ -23,6 +24,7 @@ app = FastAPI(
 )
 
 app.include_router(wallet_router)
+app.include_router(auth_router)
 
 
 @app.exception_handler(Exception)

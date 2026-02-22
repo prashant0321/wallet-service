@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-  # ── PostgreSQL database ──────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     container_name: wallet_db
@@ -14,14 +13,14 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql   # auto-runs on first boot
+      - ./seed.sql:/docker-entrypoint-initdb.d/seed.sql  
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U wallet_user -d wallet_db"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  # ── Wallet API ───────────────────────────────────────────────────────────
+
   api:
     build:
       context: .
@@ -38,7 +37,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app         # mount source for development (remove in production)
+      - .:/app         
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:

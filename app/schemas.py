@@ -8,7 +8,6 @@ from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 
-# ── Asset Type ───────────────────────────────────────────────────────────────
 
 class AssetTypeOut(BaseModel):
     id: UUID
@@ -20,8 +19,6 @@ class AssetTypeOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Account ──────────────────────────────────────────────────────────────────
-
 class AccountOut(BaseModel):
     id: UUID
     username: str
@@ -32,8 +29,6 @@ class AccountOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
-
-# ── Wallet / Balance ──────────────────────────────────────────────────────────
 
 class WalletOut(BaseModel):
     id: UUID
@@ -52,8 +47,6 @@ class BalanceResponse(BaseModel):
     symbol: str
     balance: Decimal
 
-
-# ── Transaction requests ──────────────────────────────────────────────────────
 
 class TopUpRequest(BaseModel):
     """
@@ -117,7 +110,6 @@ class SpendRequest(BaseModel):
         return v
 
 
-# ── Transaction response ──────────────────────────────────────────────────────
 
 class TransactionOut(BaseModel):
     id: UUID
@@ -150,10 +142,27 @@ class TransactionListResponse(BaseModel):
     total: int
 
 
-# ── Error ─────────────────────────────────────────────────────────────────────
 
 class ErrorResponse(BaseModel):
     status: str = "error"
     code: str
     message: str
     details: Optional[str] = None
+
+
+class RegisterRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=150)
+    email: Optional[str] = Field(None, max_length=255)
+    password: str = Field(..., min_length=6)
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    account_id: UUID
+    username: str

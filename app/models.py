@@ -37,6 +37,7 @@ class Account(Base):
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(150), nullable=False, unique=True)
     email = Column(String(255), nullable=True, unique=True)
+    hashed_password = Column(String(255), nullable=True)
     is_system = Column(Boolean, nullable=False, default=False)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)

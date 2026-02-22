@@ -46,7 +46,6 @@ def _handle_service_errors(exc: Exception) -> HTTPException:
     return HTTPException(status_code=500, detail={"code": "INTERNAL_ERROR", "message": str(exc)})
 
 
-# ── READ endpoints ────────────────────────────────────────────────────────────
 
 @router.get(
     "/balance/{account_id}/{asset_type_id}",
@@ -142,7 +141,6 @@ def top_up(
         )
         db.commit()
     except DuplicateIdempotentRequestError as e:
-        # Return the original response with 200 OK (not 201) to signal a duplicate
         return TransactionResponse(**e.cached_response)
     except Exception as e:
         db.rollback()

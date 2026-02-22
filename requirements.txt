@@ -16,5 +16,10 @@ pytest==8.3.4
 pytest-cov==6.0.0
 httpx==0.28.1       # required by FastAPI TestClient
 
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+
 # Dev utilities
 python-dotenv==1.0.1
