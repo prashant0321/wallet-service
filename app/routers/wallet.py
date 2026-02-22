@@ -1,6 +1,3 @@
-"""
-FastAPI router — Wallet endpoints.
-"""
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
@@ -34,10 +31,7 @@ import app.service as svc
 router = APIRouter(prefix="/wallet", tags=["Wallet"])
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def _handle_service_errors(exc: Exception) -> HTTPException:
-    """Map service exceptions to HTTP status codes."""
     mapping = {
         InsufficientFundsError: (status.HTTP_402_PAYMENT_REQUIRED, "INSUFFICIENT_FUNDS"),
         WalletNotFoundError:    (status.HTTP_404_NOT_FOUND,         "WALLET_NOT_FOUND"),
@@ -58,10 +52,6 @@ def _handle_service_errors(exc: Exception) -> HTTPException:
     "/balance/{account_id}/{asset_type_id}",
     response_model=BalanceResponse,
     summary="Get wallet balance",
-    description=(
-        "Returns the current balance of a user's wallet for a specific asset type. "
-        "This is an O(1) read from the denormalised `wallets` table."
-    ),
 )
 def get_balance(
     account_id: UUID,
@@ -86,10 +76,6 @@ def get_balance(
     "/transactions/{account_id}/{asset_type_id}",
     response_model=TransactionListResponse,
     summary="Get transaction history",
-    description=(
-        "Returns paginated ledger entries for a wallet, newest first. "
-        "Use `limit` and `offset` for pagination."
-    ),
 )
 def get_transactions(
     account_id: UUID,
@@ -133,19 +119,11 @@ def list_accounts(
     return svc.list_accounts(db, include_system=include_system)
 
 
-# ── WRITE endpoints ───────────────────────────────────────────────────────────
-
 @router.post(
     "/topup",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Top up a user wallet (credit purchase)",
-    description=(
-        "Credits virtual currency to a user's wallet. Represents a user buying "
-        "in-app credits with real money. The external payment is assumed complete. "
-        "\n\n**Idempotency:** Pass a unique `Idempotency-Key` header to safely retry "
-        "without duplicating the credit."
-    ),
+    summary="Top up a user wallet",
 )
 def top_up(
     request: TopUpRequest,
@@ -177,12 +155,7 @@ def top_up(
     "/bonus",
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Issue a bonus/incentive to a user",
-    description=(
-        "The system grants free credits to a user (e.g. referral bonus, daily reward). "
-        "Debits the Bonus Pool system wallet, credits the user wallet. "
-        "\n\n**Idempotency:** Pass a unique `Idempotency-Key` header."
-    ),
+    summary="Issue a bonus to a user",
 )
 def issue_bonus(
     request: BonusRequest,
@@ -214,11 +187,6 @@ def issue_bonus(
     response_model=TransactionResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Spend credits for an in-app purchase",
-    description=(
-        "Deducts virtual credits from a user's wallet. Returns `402 Payment Required` "
-        "if the balance is insufficient. Debits the user, credits the Revenue system wallet. "
-        "\n\n**Idempotency:** Pass a unique `Idempotency-Key` header."
-    ),
 )
 def spend(
     request: SpendRequest,

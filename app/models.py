@@ -1,6 +1,3 @@
-"""
-SQLAlchemy ORM models for the Wallet Service.
-"""
 from datetime import datetime, timezone
 from decimal import Decimal
 from sqlalchemy import (
@@ -19,15 +16,11 @@ def utcnow():
 
 
 class AssetType(Base):
-    """
-    Defines the virtual currency type (e.g. Gold Coins, Diamonds, Loyalty Points).
-    A platform can have multiple asset types.
-    """
     __tablename__ = "asset_types"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False, unique=True)
-    symbol = Column(String(20), nullable=False, unique=True)   # e.g. "GC", "DIA", "LP"
+    symbol = Column(String(20), nullable=False, unique=True)
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
@@ -39,16 +32,12 @@ class AssetType(Base):
 
 
 class Account(Base):
-    """
-    Represents either a real user or a system account (Treasury, Revenue, etc.).
-    System accounts act as the source/sink of funds for top-ups and bonuses.
-    """
     __tablename__ = "accounts"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(150), nullable=False, unique=True)
     email = Column(String(255), nullable=True, unique=True)
-    is_system = Column(Boolean, nullable=False, default=False)   # True for treasury/system
+    is_system = Column(Boolean, nullable=False, default=False)
     is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
 
@@ -59,19 +48,13 @@ class Account(Base):
 
 
 class Wallet(Base):
-    """
-    One wallet per (account, asset_type) pair.
-    Stores the current balance as a denormalized, always-up-to-date snapshot.
-    The source of truth for the balance is the ledger (transactions table),
-    but we keep this for O(1) balance reads.
-    """
     __tablename__ = "wallets"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id = Column(Uuid(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
     asset_type_id = Column(Uuid(as_uuid=True), ForeignKey("asset_types.id"), nullable=False)
     balance = Column(Numeric(precision=20, scale=4), nullable=False, default=Decimal("0"))
-    version = Column(Integer, nullable=False, default=0)  # optimistic lock counter
+    version = Column(Integer, nullable=False, default=0)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
 
     account = relationship("Account", back_populates="wallets")
@@ -88,34 +71,25 @@ class Wallet(Base):
 
 
 class TransactionType(str):
-    TOPUP = "TOPUP"          # User buys credits (real money → virtual credits)
-    BONUS = "BONUS"          # System gives free credits
-    SPEND = "SPEND"          # User spends credits inside the app
-    REFUND = "REFUND"        # Credits returned to user
-    ADJUSTMENT = "ADJUSTMENT"  # Admin correction
+    TOPUP = "TOPUP"
+    BONUS = "BONUS"
+    SPEND = "SPEND"
+    REFUND = "REFUND"
+    ADJUSTMENT = "ADJUSTMENT"
 
 
 class Transaction(Base):
-    """
-    Immutable double-entry ledger record.
-    Every credit/debit is captured as a signed amount on a wallet.
-    For each business event, exactly two (or more) entries are created:
-      - debit entry on the source wallet  (negative amount)
-      - credit entry on the destination wallet (positive amount)
-    This keeps the ledger balanced at all times.
-    """
     __tablename__ = "transactions"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    # Group debit + credit entries for the same business event
     reference_id = Column(Uuid(as_uuid=True), nullable=False, index=True, default=uuid.uuid4)
     transaction_type = Column(String(20), nullable=False)
     wallet_id = Column(Uuid(as_uuid=True), ForeignKey("wallets.id"), nullable=False)
-    amount = Column(Numeric(precision=20, scale=4), nullable=False)   # positive=credit, negative=debit
+    amount = Column(Numeric(precision=20, scale=4), nullable=False)
     balance_after = Column(Numeric(precision=20, scale=4), nullable=False)
     description = Column(Text, nullable=True)
     idempotency_key = Column(String(255), nullable=True, index=True)
-    metadata_ = Column("metadata", Text, nullable=True)  # JSON string for extra data
+    metadata_ = Column("metadata", Text, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
 
     wallet = relationship("Wallet")
@@ -130,16 +104,12 @@ class Transaction(Base):
 
 
 class IdempotencyKey(Base):
-    """
-    Stores the result of already-processed requests so that retried
-    requests return the same response without re-executing the transaction.
-    """
     __tablename__ = "idempotency_keys"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     key = Column(String(255), nullable=False, unique=True)
     endpoint = Column(String(100), nullable=False)
-    response_body = Column(Text, nullable=False)  # JSON-serialized response
+    response_body = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=utcnow)
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
