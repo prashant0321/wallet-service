@@ -7,7 +7,7 @@ from sqlalchemy import (
     Column, String, Numeric, Integer, ForeignKey,
     DateTime, Text, Boolean, Index, CheckConstraint, UniqueConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.types import Uuid
 from sqlalchemy.orm import relationship, declarative_base
 import uuid
 
@@ -25,7 +25,7 @@ class AssetType(Base):
     """
     __tablename__ = "asset_types"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False, unique=True)
     symbol = Column(String(20), nullable=False, unique=True)   # e.g. "GC", "DIA", "LP"
     description = Column(Text, nullable=True)
@@ -45,7 +45,7 @@ class Account(Base):
     """
     __tablename__ = "accounts"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(150), nullable=False, unique=True)
     email = Column(String(255), nullable=True, unique=True)
     is_system = Column(Boolean, nullable=False, default=False)   # True for treasury/system
@@ -67,9 +67,9 @@ class Wallet(Base):
     """
     __tablename__ = "wallets"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id = Column(UUID(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
-    asset_type_id = Column(UUID(as_uuid=True), ForeignKey("asset_types.id"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id = Column(Uuid(as_uuid=True), ForeignKey("accounts.id"), nullable=False)
+    asset_type_id = Column(Uuid(as_uuid=True), ForeignKey("asset_types.id"), nullable=False)
     balance = Column(Numeric(precision=20, scale=4), nullable=False, default=Decimal("0"))
     version = Column(Integer, nullable=False, default=0)  # optimistic lock counter
     updated_at = Column(DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
@@ -106,11 +106,11 @@ class Transaction(Base):
     """
     __tablename__ = "transactions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # Group debit + credit entries for the same business event
-    reference_id = Column(UUID(as_uuid=True), nullable=False, index=True, default=uuid.uuid4)
+    reference_id = Column(Uuid(as_uuid=True), nullable=False, index=True, default=uuid.uuid4)
     transaction_type = Column(String(20), nullable=False)
-    wallet_id = Column(UUID(as_uuid=True), ForeignKey("wallets.id"), nullable=False)
+    wallet_id = Column(Uuid(as_uuid=True), ForeignKey("wallets.id"), nullable=False)
     amount = Column(Numeric(precision=20, scale=4), nullable=False)   # positive=credit, negative=debit
     balance_after = Column(Numeric(precision=20, scale=4), nullable=False)
     description = Column(Text, nullable=True)
@@ -136,7 +136,7 @@ class IdempotencyKey(Base):
     """
     __tablename__ = "idempotency_keys"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     key = Column(String(255), nullable=False, unique=True)
     endpoint = Column(String(100), nullable=False)
     response_body = Column(Text, nullable=False)  # JSON-serialized response
