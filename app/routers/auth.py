@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -13,15 +13,13 @@ from app.schemas import LoginRequest, RegisterRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def _hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def _verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
 def _create_access_token(data: dict, expires_minutes: Optional[int] = None) -> str:
