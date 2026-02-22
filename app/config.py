@@ -7,8 +7,9 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # ── Database ────────────────────────────────────────────────────────────
-    # Default: SQLite (built-in, zero setup). Switch to PostgreSQL in .env for production.
-    DATABASE_URL: str = "sqlite:///./wallet.db"
+    # Default: in-memory SQLite (works on any filesystem including Railway).
+    # Set DATABASE_URL env var to switch to PostgreSQL in production.
+    DATABASE_URL: str = "sqlite://"
     DB_ECHO: bool = False          # Set True to log all SQL (dev only)
 
     # ── Application ─────────────────────────────────────────────────────────
