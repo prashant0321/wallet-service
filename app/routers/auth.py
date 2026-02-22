@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt
@@ -72,11 +73,17 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": "INVALID_CREDENTIALS", "message": "Invalid username or password"},
         )
-    if not account.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"code": "ACCOUNT_INACTIVE", "message": "Account is deactivated"},
-        )
-
     token = _create_access_token({"sub": str(account.id), "username": account.username})
     return TokenResponse(access_token=token, account_id=account.id, username=account.username)
+
+
+@router.delete("/accounts/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(account_id: UUID, db: Session = Depends(get_db)):
+    account = db.query(Account).filter(Account.id == account_id, Account.is_system == False).first()
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "ACCOUNT_NOT_FOUND", "message": "Account not found"},
+        )
+    db.delete(account)
+    db.commit()
