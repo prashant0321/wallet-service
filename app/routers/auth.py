@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import jwt
 import bcrypt
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import Account
+from app.models import Account, AssetType, Wallet
 from app.schemas import LoginRequest, RegisterRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -52,6 +54,13 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
         is_active=True,
     )
     db.add(account)
+    db.flush()
+
+    # auto-create a wallet for every active asset type
+    asset_types = db.execute(select(AssetType).where(AssetType.is_active == True)).scalars().all()
+    for asset in asset_types:
+        db.add(Wallet(account_id=account.id, asset_type_id=asset.id, balance=Decimal("0")))
+
     db.commit()
     db.refresh(account)
 
