@@ -1,0 +1,194 @@
+{
+  "info": {
+    "name": "Wallet Service API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://wallet-service-production-1cf9.up.railway.app"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "account_id",
+      "value": "181b3f08-956b-4600-9c3a-ce02c2a3c501"
+    },
+    {
+      "key": "gc_asset_id",
+      "value": "6c42bc79-9690-41ac-adb0-89b05d12fb27"
+    },
+    {
+      "key": "dia_asset_id",
+      "value": "608d1f2c-ad00-4f80-b8a8-a937fede4883"
+    },
+    {
+      "key": "lp_asset_id",
+      "value": "f90f1cb8-33fd-42ef-87ae-82aa2ea377a8"
+    }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.access_token) {",
+                  "  pm.collectionVariables.set('token', json.access_token);",
+                  "  pm.collectionVariables.set('account_id', json.account_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"prashant\",\n  \"email\": \"prashantkhandelwal001@gmail.com\",\n  \"password\": \"abc@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.access_token) {",
+                  "  pm.collectionVariables.set('token', json.access_token);",
+                  "  pm.collectionVariables.set('account_id', json.account_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"prashant\",\n  \"password\": \"abc@123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/auth/accounts/{{account_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "List Asset Types",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wallet/asset-types"
+          }
+        },
+        {
+          "name": "List Accounts",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wallet/accounts"
+          }
+        },
+        {
+          "name": "Get Balance",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/wallet/balance/{{account_id}}/{{gc_asset_id}}"
+          }
+        },
+        {
+          "name": "Get Transactions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/wallet/transactions/{{account_id}}/{{gc_asset_id}}?limit=20&offset=0",
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Top Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "topup-001" }
+            ],
+            "url": "{{base_url}}/wallet/topup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_account_id\": \"{{account_id}}\",\n  \"asset_type_id\": \"{{gc_asset_id}}\",\n  \"amount\": \"100.00\",\n  \"payment_reference\": \"PAY-001\",\n  \"description\": \"Purchased Gold Coins\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Issue Bonus",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "bonus-001" }
+            ],
+            "url": "{{base_url}}/wallet/bonus",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_account_id\": \"{{account_id}}\",\n  \"asset_type_id\": \"{{gc_asset_id}}\",\n  \"amount\": \"50.00\",\n  \"reason\": \"Daily login reward\",\n  \"description\": \"Login bonus\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Spend",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "spend-001" }
+            ],
+            "url": "{{base_url}}/wallet/spend",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_account_id\": \"{{account_id}}\",\n  \"asset_type_id\": \"{{gc_asset_id}}\",\n  \"amount\": \"30.00\",\n  \"item_reference\": \"ITEM-001\",\n  \"description\": \"Bought sword\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
