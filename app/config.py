@@ -7,8 +7,8 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # ── Database ────────────────────────────────────────────────────────────
-    # Default: in-memory SQLite (works on any filesystem including Railway).
-    # Set DATABASE_URL env var to switch to PostgreSQL in production.
+    # Set DATABASE_URL env var to use PostgreSQL in production.
+    # Falls back to SQLite in-memory if not set.
     DATABASE_URL: str = "sqlite://"
     DB_ECHO: bool = False          # Set True to log all SQL (dev only)
 
